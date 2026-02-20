@@ -1,0 +1,13 @@
+# Virtual environments
+.env/
+env/
+
+# Bytecode files
+__pycache__/
+*.pyc
+
+# Operating System files
+Thumbs.db # Windows
+
+# Sensitive information (if applicable)
+.env

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Room</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #121212;
+            color: white;
+        }
+
+        .header {
+            background: #1e1e1e;
+            padding: 15px;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        .chat-box {
+            height: 75vh;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .message {
+            margin: 8px 0;
+        }
+
+        .input-box {
+            display: flex;
+            padding: 10px;
+            background: #1e1e1e;
+        }
+
+        input {
+            flex: 1;
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+        }
+
+        button {
+            margin-left: 10px;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background: #00bcd4;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #00e5ff;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="header">
+    Room: {{ roomname }}
+</div>
+
+<div id="chat-box" class="chat-box">
+    {% if myChatList %}
+        {% for chat in myChatList %}
+            <div class="message">
+                {{ chat.chat }}
+            </div>
+        {% endfor %}
+    {% endif %}
+</div>
+
+<div class="input-box">
+    <input type="text" id="message" placeholder="Type message..." autocomplete="off">
+    <button onclick="sendMessage()">Send</button>
+</div>
+
+<script>
+    var socket = io();
+    var room = "{{ roomname }}";
+
+    socket.emit('join', { room: room, roomname: room });
+
+    socket.on('message', function(data) {
+        var chatBox = document.getElementById("chat-box");
+        var newMessage = document.createElement("div");
+        newMessage.classList.add("message");
+        newMessage.innerHTML = data.msg;
+        chatBox.appendChild(newMessage);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    });
+
+    function sendMessage() {
+        var messageInput = document.getElementById("message");
+        var msg = messageInput.value;
+
+        if (msg.trim() !== "") {
+            socket.emit('message', {
+                room: room,
+                roomname: room,
+                msg: msg
+            });
+            messageInput.value = "";
+        }
+    }
+
+    window.onbeforeunload = function() {
+        socket.emit('leave', { room: room, roomname: room });
+    };
+</script>
+
+</body>
+</html>
