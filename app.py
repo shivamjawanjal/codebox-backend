@@ -77,29 +77,37 @@ def join_room_api():
     data = request.json
     roomname = data.get('roomname')
     password = data.get('password')
+    btid = data.get('btid')  # Get the user joining
 
     room = rooms_collection.find_one({'roomname': roomname})
 
     if not room or room['password'] != password:
         return jsonify({'status': 'error', 'message': 'Invalid room or password'})
 
+    # Add user to room if not already there
+    if 'users' not in room:
+        room['users'] = []
+    
+    if btid not in room.get('users', []):
+        rooms_collection.update_one(
+            {'roomname': roomname}, 
+            {'$addToSet': {'users': btid}}
+        )
+
     return jsonify({'status': 'success'})
 
-@app.route('/api/leave', methods=['POST'])
+@app.route('/api/leaveroom', methods=['POST'])
 def leave_room_api():
     data = request.json
     roomname = data.get('roomname')
+    btid = data.get('btid')
 
-    rooms_collection.update_one({'roomname': roomname}, {'$pull': {'users': data.get('user')}})
+    rooms_collection.update_one(
+        {'roomname': roomname}, 
+        {'$pull': {'users': btid}}
+    )
     return jsonify({'status': 'success'})
 
-@app.route('/api/rooms/<roomname>/users', methods=['GET'])
-def get_room_users(roomname):
-    room = rooms_collection.find_one({'roomname': roomname})
-    if not room:
-        return jsonify({'status': 'error', 'message': 'Room not found'})
-
-    return jsonify({'users': room.get('users', [])})
 
 # -------- GET ROOMS -------- #
 @app.route('/api/rooms', methods=['GET'])
@@ -145,14 +153,40 @@ def handle_code_change(data):
 # -------- SOCKET -------- #
 @socketio.on('join')
 def handle_join(data):
-    join_room(data['room'])
-    send({'msg': 'User joined'}, room=data['room'])
+    room = data['room']
+    user = data['user']
+    join_room(room)
+    
+    # Notify others that user joined
+    socketio.emit('user_joined', {'user': user}, room=room)
+    
+    # Send current users list to the new user
+    room_doc = rooms_collection.find_one({'roomname': room})
+    users = room_doc.get('users', []) if room_doc else []
+    socketio.emit('users_list', {'users': users}, room=request.sid)
 
 @socketio.on('leave')
 def handle_leave(data):
-    leave_room(data['room'])
-    send({'msg': 'User left'}, room=data['room'])
+    room = data['room']
+    user = data['user']
+    leave_room(room)
+    
+    # Notify others that user left
+    socketio.emit('user_left', {'user': user}, room=room)
+    
+    # Update users in database
+    rooms_collection.update_one(
+        {'roomname': room}, 
+        {'$pull': {'users': user}}
+    )
 
+@socketio.on('get_users')
+def handle_get_users(data):
+    room = data['room']
+    room_doc = rooms_collection.find_one({'roomname': room})
+    users = room_doc.get('users', []) if room_doc else []
+    socketio.emit('users_list', {'users': users}, room=request.sid)
+    
 @socketio.on('message')
 def handle_message(data):
     chats_collection.insert_one({
