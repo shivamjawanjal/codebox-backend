@@ -9,7 +9,10 @@ import os
 import uuid
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=[
+    "http://localhost:3000",
+    "https://your-frontend.vercel.app"
+])
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 db = get_database()
