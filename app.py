@@ -342,5 +342,3 @@ def run_code():
         except:
             pass
         
-if __name__ == '__main__':
-    socketio.run(app, debug=True)
