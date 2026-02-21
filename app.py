@@ -21,6 +21,9 @@ rooms_collection = db['rooms']
 chats_collection = db['chats']
 code_collection = db['live_code']
 
+@app.route('/', methods=['GET'])
+def start():
+    return  "<p>Hello, World!</p>"
 # -------- CREATE USER -------- #
 @app.route('/api/createuser', methods=['POST'])
 def create_user():
