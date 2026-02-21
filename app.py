@@ -9,10 +9,7 @@ import os
 import uuid
 
 app = Flask(__name__)
-CORS(app, origins=[
-    "http://localhost:3000",
-    "https://your-frontend.vercel.app"
-])
+CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 db = get_database()
@@ -21,9 +18,8 @@ rooms_collection = db['rooms']
 chats_collection = db['chats']
 code_collection = db['live_code']
 
-@app.route('/', methods=['GET'])
-def start():
-    return  "<p>Hello, World!</p>"
+
+
 # -------- CREATE USER -------- #
 @app.route('/api/createuser', methods=['POST'])
 def create_user():
@@ -348,3 +344,5 @@ def run_code():
         except:
             pass
         
+if __name__ == '__main__':
+    socketio.run(app, debug=True)
