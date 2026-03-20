@@ -7,7 +7,9 @@ import subprocess
 import tempfile
 import os
 import uuid
+import eventlet
 
+eventlet.monkey_patch()
 app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
@@ -343,4 +345,7 @@ def run_code():
             os.rmdir(temp_dir)
         except:
             pass
+
+if __name__ == "__main__":
+    socketio.run(app, host="0.0.0.0", port=10000)
         
