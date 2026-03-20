@@ -1,3 +1,6 @@
+import eventlet
+eventlet.monkey_patch()
+
 from flask import Flask, request, jsonify
 from flask_socketio import SocketIO, join_room, leave_room, send
 from config import get_database
@@ -7,9 +10,7 @@ import subprocess
 import tempfile
 import os
 import uuid
-import eventlet
 
-eventlet.monkey_patch()
 app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
